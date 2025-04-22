@@ -1,0 +1,37 @@
+# Ignore Python cache and venv
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE/editor files
+*.swp
+*.swo
+*.idea/
+.vscode/
+
+# Ignore deployment and test artifacts
+*.log
+*.bak
+*.tmp
+node_modules/
+dist/
+build/
+.env
+.env.*
+
+# Ignore backend files in frontend deploy
+../primora_backend.py
+../primora_lsp.py
+../primora_parser.py
+../primora_interpreter.py
+../primora_nl.py
+../test_backend.py
+../test_playground_selenium.py
+../requirements.txt
+../*.pyc
+../__pycache__/

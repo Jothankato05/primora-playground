@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Primora Language</title>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <header>
+        <h1>Primora Language Interactive REPL</h1>
+        <p>Type Primora code below and click "Run" to see output.<br>
+        <b>New:</b> Try <code>fetch url("https://jsonplaceholder.typicode.com/todos/1") as todo</code>!</p>
+    </header>
+    <div id="main-wrap">
+      <div id="playground">
+        <textarea id="code" placeholder="Enter Primora code here..." oninput="checkCode()">
+fetch url("https://jsonplaceholder.typicode.com/todos/1") as todo
+echo "Fetched title: " using frame(todo.title)
+        </textarea>
+        <div>
+          <button onclick="runCode()">Run</button>
+          <button onclick="explainCode()">Explain</button>
+          <button onclick="refactorCode()">Refactor</button>
+          <button onclick="shareCode()">Share</button>
+        </div>
+        <div id="feedback"></div>
+        <div id="suggestions"></div>
+        <div id="collaborators"></div>
+        <div id="output"></div>
+        <div id="explanation"></div>
+        <div id="refactored"></div>
+      </div>
+      <aside id="sidebar">
+        <h2>AI Assistant</h2>
+        <input type="text" id="nl_input" placeholder="Describe what you want to do..." />
+        <button onclick="nlToCode()">Convert to Primora Code</button>
+        <div id="nl_output"></div>
+        <hr>
+        <h3>Primora Thoughts</h3>
+<div id="primora_thoughts_panel" class="collapsible-panel">
+  <div id="primora_thoughts"></div>
+  <button onclick="refreshThoughts()" class="icon-btn" title="Refresh"><span>🔄</span> Refresh Thoughts</button>
+  <button onclick="clearThoughts()" class="icon-btn" title="Clear"><span>🧹</span> Clear Thoughts</button>
+  <button onclick="toggleThoughtsPanel()" class="icon-btn" title="Collapse"><span id="collapse_icon">⬆️</span></button>
+</div>
+        <hr>
+        <h3>Universal Commands</h3>
+<div class="sidebar-section">
+  <input type="text" id="wiki_query" placeholder="Wikipedia topic" class="sidebar-input">
+  <button onclick="runWiki()" class="icon-btn"><span>📚</span> Wiki</button>
+</div>
+<div class="sidebar-section">
+  <input type="text" id="weather_location" placeholder="City" class="sidebar-input">
+  <button onclick="runWeather()" class="icon-btn"><span>☁️</span> Weather</button>
+</div>
+<div class="sidebar-section">
+  <input type="text" id="news_topic" placeholder="News topic" class="sidebar-input">
+  <button onclick="runNews()" class="icon-btn"><span>📰</span> News</button>
+</div>
+<div class="sidebar-section">
+  <input type="text" id="summarize_text" placeholder="Text to summarize" class="sidebar-input">
+  <button onclick="runSummarize()" class="icon-btn"><span>✂️</span> Summarize</button>
+</div>
+<div class="sidebar-section">
+  <input type="text" id="translate_text" placeholder="Text to translate" class="sidebar-input">
+  <input type="text" id="translate_lang" placeholder="Target language (e.g. es)" class="sidebar-input" style="width: 80px;">
+  <button onclick="runTranslate()" class="icon-btn"><span>🌐</span> Translate</button>
+</div>
+<div class="sidebar-section">
+  <input type="number" id="currency_amount" placeholder="Amount" class="sidebar-input" style="width: 70px;">
+  <input type="text" id="currency_from" placeholder="From (USD)" class="sidebar-input" style="width: 60px;">
+  <input type="text" id="currency_to" placeholder="To (EUR)" class="sidebar-input" style="width: 60px;">
+  <button onclick="runCurrency()" class="icon-btn"><span>💱</span> Currency</button>
+</div>
+<div class="sidebar-section">
+  <button onclick="runJoke()" class="icon-btn"><span>😂</span> Joke</button>
+</div>
+        <div id="universal_result"></div>
+        <div class="docs">
+          <b>Docs & Examples:</b><br>
+          <b>search</b>: <code>search "your query" as results</code><br>
+          <b>plot</b>: <code>plot results as "My Chart"</code><br>
+          <b>email</b>: <code>email to bob@example.com subject "Hi" body "How are you?"</code><br>
+          <b>automate</b>: <code>automate backup on server</code><br>
+          <b>wiki</b>: <code>wiki Einstein</code><br>
+          <b>weather</b>: <code>weather London</code><br>
+          <b>news</b>: <code>news AI</code><br>
+          <b>summarize</b>: <code>summarize "long text here"</code><br>
+        </div>
+      </aside>
+    </div>
+    <script type="module">
+        import firebaseConfig from './firebase-config.js';
+        // Firebase CDN fallback for demo
+        if (!window.firebase) {
+            const script = document.createElement('script');
+            script.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js';
+            document.head.appendChild(script);
+            const dbScript = document.createElement('script');
+            dbScript.src = 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js';
+            document.head.appendChild(dbScript);
+        }
+        let app, db, codeRef;
+        let collaborators = new Set();
+        function setupFirebase() {
+            if (!window.firebase) return setTimeout(setupFirebase, 300);
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            let docId = window.location.hash.slice(1) || (Math.random().toString(36).slice(2));
+            window.location.hash = docId;
+            codeRef = db.ref('primora_docs/' + docId);
+            codeRef.on('value', snap => {
+                if (snap.exists()) {
+                    const val = snap.val();
+                    if (val.code !== document.getElementById('code').value) {
+                        document.getElementById('code').value = val.code;
+                        checkCode();
+                    }
+                    collaborators = new Set(val.collaborators||[]);
+                    updateCollaborators();
+                }
+            });
+            setInterval(() => {
+                collaborators.add(navigator.userAgent.slice(0,20));
+                codeRef.child('collaborators').set(Array.from(collaborators));
+            }, 5000);
+        }
+        function syncCode() {
+            if (codeRef) {
+                codeRef.set({
+                    code: document.getElementById('code').value,
+                    collaborators: Array.from(collaborators)
+                });
+            }
+        }
+        window.addEventListener('DOMContentLoaded', setupFirebase);
+        document.getElementById('code').addEventListener('input', () => {
+            checkCode();
+            syncCode();
+        });
+        function updateCollaborators() {
+            document.getElementById('collaborators').textContent = 'Collaborators: ' + Array.from(collaborators).join(', ');
+        }
+        const COMMANDS = [
+            'search', 'summarize', 'fetch', 'echo', 'listen', 'predict', 'if', 'manipulate', 'plot', 'email', 'automate'
+        ];
+        function checkCode() {
+            const code = document.getElementById('code').value;
+            let feedback = '';
+            let suggestions = '';
+            // Advanced syntax check: unmatched braces, missing as, unknown command, missing quotes, etc.
+            if ((code.match(/{/g)||[]).length !== (code.match(/}/g)||[]).length) {
+                feedback = 'Syntax Error: Unmatched { or }.';
+            } else if (/plot\s+\w+$/.test(code)) {
+                feedback = 'Syntax Error: plot command missing "as <title>".';
+                suggestions = 'Quick fix: plot mydata as "My Chart"';
+            } else if (/email\s+to\s+[^ ]+$/.test(code) && !/subject\s+"[^"]+"/.test(code)) {
+                feedback = 'Syntax Error: email command missing subject.';
+                suggestions = 'Quick fix: email to bob@example.com subject "Hello" body "Text"';
+            } else if (/automate\s+\w+$/.test(code)) {
+                feedback = 'Syntax Error: automate command missing "on <target>".';
+                suggestions = 'Quick fix: automate click on "Login Button"';
+            }
+            // Suggest commands as you type
+            const lastLine = code.split('\n').pop().trim();
+            if (lastLine && !lastLine.startsWith('#')) {
+                const firstWord = lastLine.split(' ')[0];
+                if (firstWord && !COMMANDS.includes(firstWord)) {
+                    suggestions += (suggestions ? '\n' : '') + 'Did you mean: ' + COMMANDS.filter(cmd => cmd.startsWith(firstWord)).join(', ');
+                }
+            }
+            document.getElementById('feedback').textContent = feedback;
+            document.getElementById('suggestions').textContent = suggestions;
+        }
+        function shareCode() {
+            const code = encodeURIComponent(document.getElementById('code').value);
+            const url = window.location.origin + window.location.pathname + '?code=' + code;
+            navigator.clipboard.writeText(url);
+            alert('Shareable link copied to clipboard!');
+        }
+        async function runCode() {
+            const code = document.getElementById('code').value;
+            document.getElementById('output').textContent = 'Running...';
+            document.getElementById('explanation').textContent = '';
+            document.getElementById('refactored').textContent = '';
+            try {
+                const resp = await fetch('http://localhost:5001/run', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code})
+                });
+                const data = await resp.json();
+                if (data.output) {
+                    document.getElementById('output').textContent = data.output;
+                } else {
+                    document.getElementById('output').textContent = data.error || 'No output.';
+                }
+            } catch (e) {
+                document.getElementById('output').textContent = 'Error: ' + e;
+            }
+        }
+        async function explainCode() {
+            const code = document.getElementById('code').value;
+            document.getElementById('explanation').textContent = 'Explaining...';
+            try {
+                const resp = await fetch('http://localhost:5001/explain', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code})
+                });
+                const data = await resp.json();
+                document.getElementById('explanation').textContent = data.explanation || 'No explanation.';
+            } catch (e) {
+                document.getElementById('explanation').textContent = 'Error: ' + e;
+            }
+        }
+        async function refactorCode() {
+            const code = document.getElementById('code').value;
+            document.getElementById('refactored').textContent = 'Refactoring...';
+            try {
+                const resp = await fetch('http://localhost:5001/refactor', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code})
+                });
+                const data = await resp.json();
+                document.getElementById('refactored').textContent = data.refactored || 'No refactor suggestion.';
+            } catch (e) {
+                document.getElementById('refactored').textContent = 'Error: ' + e;
+            }
+        }
+
+        function nlToCode() {
+            const nl = document.getElementById('nl_input').value.trim();
+            let code = '';
+            // Mock: simple rules for demo
+            if (nl.toLowerCase().includes('search') && nl.toLowerCase().includes('summarize')) {
+                code = 'search "latest AI breakthroughs" as results\nsummarize results as summary\necho summary';
+            } else if (nl.toLowerCase().includes('fetch') && nl.toLowerCase().includes('json')) {
+                code = 'fetch url("https://jsonplaceholder.typicode.com/todos/1") as todo\necho todo';
+            } else if (nl.toLowerCase().includes('email')) {
+                code = '# Email sending is not yet implemented.';
+            } else {
+                code = '# Sorry, could not parse instruction. Try rephrasing.';
+            }
+            document.getElementById('nl_output').textContent = code;
+            if (code[0] !== '#') {
+                document.getElementById('code').value = code;
+            }
+        }
+        async function refreshThoughts() {
+            document.getElementById('primora_thoughts').textContent = 'Thinking...';
+            try {
+                const resp = await fetch('http://localhost:5001/self_reflect');
+                const data = await resp.json();
+                document.getElementById('primora_thoughts').innerHTML = (data.thoughts || []).map(t => `<div>🧠 ${t}</div>`).join('') || 'No thoughts yet.';
+            } catch (e) {
+                document.getElementById('primora_thoughts').textContent = 'Error: ' + e;
+            }
+        }
+        async function clearThoughts() {
+            document.getElementById('primora_thoughts').textContent = 'Clearing...';
+            try {
+                await fetch('http://localhost:5001/clear_thoughts', {method: 'POST'});
+                refreshThoughts();
+            } catch (e) {
+                document.getElementById('primora_thoughts').textContent = 'Error: ' + e;
+            }
+        }
+        function toggleThoughtsPanel() {
+            const panel = document.getElementById('primora_thoughts_panel');
+            panel.classList.toggle('collapsed');
+            document.getElementById('collapse_icon').textContent = panel.classList.contains('collapsed') ? '⬇️' : '⬆️';
+        }
+        async function runTranslate() {
+            const text = document.getElementById('translate_text').value;
+            const target_lang = document.getElementById('translate_lang').value || 'es';
+            document.getElementById('universal_result').textContent = 'Translating...';
+            try {
+                const resp = await fetch('http://localhost:5001/translate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text, target_lang})
+                });
+                const data = await resp.json();
+                document.getElementById('universal_result').textContent = data.translated || 'No result.';
+            } catch (e) {
+                document.getElementById('universal_result').textContent = 'Error: ' + e;
+            }
+        }
+        async function runCurrency() {
+            const amount = parseFloat(document.getElementById('currency_amount').value) || 1;
+            const from = document.getElementById('currency_from').value || 'USD';
+            const to = document.getElementById('currency_to').value || 'EUR';
+            document.getElementById('universal_result').textContent = 'Converting currency...';
+            try {
+                const resp = await fetch('http://localhost:5001/currency', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({amount, from, to})
+                });
+                const data = await resp.json();
+                document.getElementById('universal_result').textContent = (data.result !== undefined) ? `${amount} ${from} = ${data.result} ${to}` : 'No result.';
+            } catch (e) {
+                document.getElementById('universal_result').textContent = 'Error: ' + e;
+            }
+        }
+        async function runJoke() {
+            document.getElementById('universal_result').textContent = 'Fetching joke...';
+            try {
+                const resp = await fetch('http://localhost:5001/joke');
+                const data = await resp.json();
+                document.getElementById('universal_result').textContent = data.joke || 'No joke.';
+            } catch (e) {
+                document.getElementById('universal_result').textContent = 'Error: ' + e;
+            }
+        }
+        async function runWiki() {
+            const query = document.getElementById('wiki_query').value;
+            document.getElementById('universal_result').textContent = 'Searching Wikipedia...';
+            try {
+                const resp = await fetch('http://localhost:5001/wiki', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query})
+                });
+                const data = await resp.json();
+                document.getElementById('universal_result').textContent = data.extract || 'No result.';
+            } catch (e) {
+                document.getElementById('universal_result').textContent = 'Error: ' + e;
+            }
+        }
+        async function runWeather() {
+            const location = document.getElementById('weather_location').value;
+            document.getElementById('universal_result').textContent = 'Checking weather...';
+            try {
+                const resp = await fetch('http://localhost:5001/weather', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({location})
+                });
+                const data = await resp.json();
+                document.getElementById('universal_result').textContent = JSON.stringify(data.weather || data.error || 'No result.');
+            } catch (e) {
+                document.getElementById('universal_result').textContent = 'Error: ' + e;
+            }
+        }
+        async function runNews() {
+            const topic = document.getElementById('news_topic').value;
+            document.getElementById('universal_result').textContent = 'Searching news...';
+            try {
+                const resp = await fetch('http://localhost:5001/news', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({topic})
+                });
+                const data = await resp.json();
+                document.getElementById('universal_result').innerHTML = (data.news || []).map(n => `<div>📰 ${n}</div>`).join('') || 'No result.';
+            } catch (e) {
+                document.getElementById('universal_result').textContent = 'Error: ' + e;
+            }
+        }
+        async function runSummarize() {
+            const text = document.getElementById('summarize_text').value;
+            document.getElementById('universal_result').textContent = 'Summarizing...';
+            try {
+                const resp = await fetch('http://localhost:5001/summarize', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text})
+                });
+                const data = await resp.json();
+                document.getElementById('universal_result').textContent = data.summary || 'No result.';
+            } catch (e) {
+                document.getElementById('universal_result').textContent = 'Error: ' + e;
+            }
+        }
+        // Auto-refresh thoughts on load
+        window.addEventListener('DOMContentLoaded', refreshThoughts);
+    </script>
+</body>
+</html>

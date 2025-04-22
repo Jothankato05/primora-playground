@@ -1,0 +1,8 @@
+flask
+flask-cors
+requests
+
+# If you use these modules, uncomment them:
+# primora_interpreter
+# primora_parser
+# primora_nl
