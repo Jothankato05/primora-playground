@@ -186,7 +186,7 @@ echo "Fetched title: " using frame(todo.title)
             document.getElementById('explanation').textContent = '';
             document.getElementById('refactored').textContent = '';
             try {
-                const resp = await fetch('http://localhost:5001/run', {
+                const resp = await fetch('https://primora-backend.onrender.com/run', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({code})
@@ -205,7 +205,7 @@ echo "Fetched title: " using frame(todo.title)
             const code = document.getElementById('code').value;
             document.getElementById('explanation').textContent = 'Explaining...';
             try {
-                const resp = await fetch('http://localhost:5001/explain', {
+                const resp = await fetch('https://primora-backend.onrender.com/explain', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({code})
@@ -220,7 +220,7 @@ echo "Fetched title: " using frame(todo.title)
             const code = document.getElementById('code').value;
             document.getElementById('refactored').textContent = 'Refactoring...';
             try {
-                const resp = await fetch('http://localhost:5001/refactor', {
+                const resp = await fetch('https://primora-backend.onrender.com/refactor', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({code})
@@ -253,7 +253,7 @@ echo "Fetched title: " using frame(todo.title)
         async function refreshThoughts() {
             document.getElementById('primora_thoughts').textContent = 'Thinking...';
             try {
-                const resp = await fetch('http://localhost:5001/self_reflect');
+                const resp = await fetch('https://primora-backend.onrender.com/self_reflect');
                 const data = await resp.json();
                 document.getElementById('primora_thoughts').innerHTML = (data.thoughts || []).map(t => `<div>🧠 ${t}</div>`).join('') || 'No thoughts yet.';
             } catch (e) {
@@ -263,7 +263,7 @@ echo "Fetched title: " using frame(todo.title)
         async function clearThoughts() {
             document.getElementById('primora_thoughts').textContent = 'Clearing...';
             try {
-                await fetch('http://localhost:5001/clear_thoughts', {method: 'POST'});
+                await fetch('https://primora-backend.onrender.com/clear_thoughts', {method: 'POST'});
                 refreshThoughts();
             } catch (e) {
                 document.getElementById('primora_thoughts').textContent = 'Error: ' + e;
@@ -279,7 +279,7 @@ echo "Fetched title: " using frame(todo.title)
             const target_lang = document.getElementById('translate_lang').value || 'es';
             document.getElementById('universal_result').textContent = 'Translating...';
             try {
-                const resp = await fetch('http://localhost:5001/translate', {
+                const resp = await fetch('https://primora-backend.onrender.com/translate', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({text, target_lang})
@@ -296,7 +296,7 @@ echo "Fetched title: " using frame(todo.title)
             const to = document.getElementById('currency_to').value || 'EUR';
             document.getElementById('universal_result').textContent = 'Converting currency...';
             try {
-                const resp = await fetch('http://localhost:5001/currency', {
+                const resp = await fetch('https://primora-backend.onrender.com/currency', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({amount, from, to})
@@ -310,7 +310,7 @@ echo "Fetched title: " using frame(todo.title)
         async function runJoke() {
             document.getElementById('universal_result').textContent = 'Fetching joke...';
             try {
-                const resp = await fetch('http://localhost:5001/joke');
+                const resp = await fetch('https://primora-backend.onrender.com/joke');
                 const data = await resp.json();
                 document.getElementById('universal_result').textContent = data.joke || 'No joke.';
             } catch (e) {
@@ -321,7 +321,7 @@ echo "Fetched title: " using frame(todo.title)
             const query = document.getElementById('wiki_query').value;
             document.getElementById('universal_result').textContent = 'Searching Wikipedia...';
             try {
-                const resp = await fetch('http://localhost:5001/wiki', {
+                const resp = await fetch('https://primora-backend.onrender.com/wiki', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({query})
@@ -336,7 +336,7 @@ echo "Fetched title: " using frame(todo.title)
             const location = document.getElementById('weather_location').value;
             document.getElementById('universal_result').textContent = 'Checking weather...';
             try {
-                const resp = await fetch('http://localhost:5001/weather', {
+                const resp = await fetch('https://primora-backend.onrender.com/weather', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({location})
@@ -351,7 +351,7 @@ echo "Fetched title: " using frame(todo.title)
             const topic = document.getElementById('news_topic').value;
             document.getElementById('universal_result').textContent = 'Searching news...';
             try {
-                const resp = await fetch('http://localhost:5001/news', {
+                const resp = await fetch('https://primora-backend.onrender.com/news', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({topic})
@@ -366,7 +366,7 @@ echo "Fetched title: " using frame(todo.title)
             const text = document.getElementById('summarize_text').value;
             document.getElementById('universal_result').textContent = 'Summarizing...';
             try {
-                const resp = await fetch('http://localhost:5001/summarize', {
+                const resp = await fetch('https://primora-backend.onrender.com/summarize', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({text})
