@@ -1,0 +1,17 @@
+name: Jekyll using Docker image
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'jekyll-site/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Jekyll site
+        uses: jerryjvl/jekyll-build-action@v1
+        with:
+          source: jekyll-site

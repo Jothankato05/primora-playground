@@ -1,0 +1,19 @@
+name: Hugo site CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'hugo-site/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.92.0'
+      - name: Build
+        run: hugo --minify --source hugo-site

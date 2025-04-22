@@ -1,0 +1,51 @@
+site_name: Primora Documentation
+nav:
+  - Home: index.md
+  - Dictionary: dictionary.md
+  - API Reference: api.md
+  - Book:
+      - Introduction: book/introduction.md
+      - Getting Started: book/getting_started.md
+      - Language Basics: book/language_basics.md
+      - AI Features: book/ai_features.md
+      - Web Programming: book/web_programming.md
+      - Data Science: book/data_science.md
+      - Advanced Topics: book/advanced.md
+      - Appendix: book/appendix.md
+  - Guides: guides/README.md
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.tabs.link
+    - palette.toggle
+    - palette
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  language: en
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true

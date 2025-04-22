@@ -1,0 +1,42 @@
+name: Deploy Primora Docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'website/**'
+      - 'primora_backend.py'
+      - 'primora_parser.py'
+      - 'primora_lsp.py'
+      - 'primora_stdlib.py'
+      - 'primora_interpreter.py'
+      - 'primora_transpiler.py'
+      - 'requirements.txt'
+      - 'mkdocs.yml'
+      - '.github/workflows/deploy-docs.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install mkdocs mkdocs-material mkdocstrings[python]
+      - name: Build docs
+        run: |
+          mkdocs build
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2.0
+        with:
+          publish-dir: ./site
+          production-deploy: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

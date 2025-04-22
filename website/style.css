@@ -10,6 +10,11 @@ button { margin-top: 1rem; padding: 0.5rem 1rem; font-size: 1rem; }
 #sidebar { flex: 1; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 1rem; min-width: 270px; }
 #sidebar h2 { font-size: 1.2rem; margin-bottom: 0.5rem; }
 #sidebar input, #sidebar button { width: 100%; margin-top: 0.5rem; }
+
+.currency-amount { width: 70px; display: inline-block; }
+.currency-from { width: 60px; display: inline-block; }
+.currency-to { width: 60px; display: inline-block; }
+.translate-lang { width: 80px; display: inline-block; }
 #sidebar .docs { font-size: 0.95rem; background: #f3f3f3; border-radius: 5px; padding: 0.5rem; margin-top: 1rem; }
 #feedback { color: #b00; font-size: 0.97rem; }
 #suggestions { color: #0a0; font-size: 0.97rem; }

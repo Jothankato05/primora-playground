@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+*.swp
+*.swo
+*.idea/
+.vscode/
+
+# Deployment/test artifacts
+*.log
+*.bak
+*.tmp
+node_modules/
+dist/
+build/
+.env
+.env.*
+
+# Backend files in frontend deploy
+website/../primora_backend.py
+website/../primora_lsp.py
+website/../primora_parser.py
+website/../primora_interpreter.py
+website/../primora_nl.py
+website/../test_backend.py
+website/../test_playground_selenium.py
+website/../requirements.txt
+website/../*.pyc
+website/../__pycache__/

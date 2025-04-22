@@ -9,10 +9,19 @@
 </head>
 <body>
     <header>
-        <h1>Primora Language Interactive REPL</h1>
-        <p>Type Primora code below and click "Run" to see output.<br>
-        <b>New:</b> Try <code>fetch url("https://jsonplaceholder.typicode.com/todos/1") as todo</code>!</p>
-    </header>
+  <div class="header-flex">
+    <div>
+      <h1>Primora Language Interactive REPL</h1>
+      <p>Type Primora code below and click "Run" to see output.<br>
+      <b>New:</b> Try <code>fetch url("https://jsonplaceholder.typicode.com/todos/1") as todo</code>!</p>
+    </div>
+    <div>
+      <a href="https://primora-docs.windsurf.build" target="_blank" rel="noopener" id="primora-docs-link" title="Open Primora Documentation (search, guides, book, and more)">
+        📖 Docs
+      </a>
+    </div>
+  </div>
+</header>
     <div id="main-wrap">
       <div id="playground">
         <textarea id="code" placeholder="Enter Primora code here..." oninput="checkCode()">
@@ -65,13 +74,13 @@ echo "Fetched title: " using frame(todo.title)
 </div>
 <div class="sidebar-section">
   <input type="text" id="translate_text" placeholder="Text to translate" class="sidebar-input">
-  <input type="text" id="translate_lang" placeholder="Target language (e.g. es)" class="sidebar-input" style="width: 80px;">
+  <input type="text" id="translate_lang" placeholder="Target language (e.g. es)" class="sidebar-input translate-lang">
   <button onclick="runTranslate()" class="icon-btn"><span>🌐</span> Translate</button>
 </div>
 <div class="sidebar-section">
-  <input type="number" id="currency_amount" placeholder="Amount" class="sidebar-input" style="width: 70px;">
-  <input type="text" id="currency_from" placeholder="From (USD)" class="sidebar-input" style="width: 60px;">
-  <input type="text" id="currency_to" placeholder="To (EUR)" class="sidebar-input" style="width: 60px;">
+  <input type="number" id="currency_amount" placeholder="Amount" class="sidebar-input currency-amount">
+  <input type="text" id="currency_from" placeholder="From (USD)" class="sidebar-input currency-from">
+  <input type="text" id="currency_to" placeholder="To (EUR)" class="sidebar-input currency-to">
   <button onclick="runCurrency()" class="icon-btn"><span>💱</span> Currency</button>
 </div>
 <div class="sidebar-section">
@@ -380,5 +389,81 @@ echo "Fetched title: " using frame(todo.title)
         // Auto-refresh thoughts on load
         window.addEventListener('DOMContentLoaded', refreshThoughts);
     </script>
+<script>
+// === In-app Docs Popups ===
+const PRIMORA_KEYWORDS = {
+  'echo': 'Prints output to the screen. Example: echo "Hello"',
+  'plot': 'Plots a variable as a chart. Example: plot data as "Title"',
+  'summarize': 'Summarizes text using AI. Example: summarize text as summary',
+  'translate': 'Translates text to a target language. Example: translate "hi" to "es"',
+  'fetch': 'Fetches data from a URL. Example: fetch url("https://...") as data',
+  'search': 'Performs a web search. Example: search "query" as result',
+  'predict': 'Predicts values using a model. Example: predict y from x using model()',
+  'if': 'Conditional branching. Example: if (x > 0) { ... } else { ... }',
+  'def': 'Defines a function. Example: def foo(x) { ... }',
+  'email': 'Sends an email. Example: email to user@example.com subject "Hi" body "..."',
+  'automate': 'Automates UI actions. Example: automate "click" on "#button"',
+  'for': 'Loop over items. Example: for x in list { ... }',
+  'return': 'Returns a value from a function. Example: return x + 1',
+  'as': 'Assigns the result of an operation. Example: fetch url(...) as data',
+  'using': 'Specifies a method or frame. Example: echo "Hello" using frame()',
+  'listen': 'Listens for input or events. Example: listen "user input" as response',
+  'manipulate': 'Manipulates data or structures. Example: manipulate data with function',
+  'weather': 'Gets weather info. Example: weather London',
+  'news': 'Fetches news. Example: news AI',
+  'joke': 'Fetches a random joke. Example: joke',
+  'currency': 'Converts currency. Example: convert 100 USD to EUR',
+  'model': 'Specifies an AI/ML model. Example: model("linear_regression")',
+  'try': 'Start of a try/catch block for error handling.',
+  'catch': 'Catches errors in try/catch blocks.',
+  '#': 'Comment line. Example: # This is a comment',
+  // Add even more as you grow Primora!
+};
+
+const codeArea = document.getElementById('code');
+let tooltip;
+
+codeArea.addEventListener('mousemove', function(e) {
+  const cursorPos = codeArea.selectionStart;
+  const code = codeArea.value;
+  const word = getWordAt(code, cursorPos);
+  if (PRIMORA_KEYWORDS[word]) {
+    showTooltip(e, PRIMORA_KEYWORDS[word]);
+  } else {
+    hideTooltip();
+  }
+});
+codeArea.addEventListener('mouseleave', hideTooltip);
+
+function getWordAt(str, pos) {
+  // Find word boundaries
+  const left = str.slice(0, pos).search(/\S+$/);
+  const right = str.slice(pos).search(/\s/);
+  if (right < 0) return str.slice(left);
+  return str.slice(left, pos + right);
+}
+function showTooltip(e, text) {
+  if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.className = 'primora-tooltip';
+    document.body.appendChild(tooltip);
+  }
+  tooltip.textContent = text;
+  tooltip.style.display = 'block';
+  tooltip.style.position = 'fixed';
+  tooltip.style.left = (e.clientX + 15) + 'px';
+  tooltip.style.top = (e.clientY + 10) + 'px';
+  tooltip.style.zIndex = 1000;
+  tooltip.style.background = '#333';
+  tooltip.style.color = '#fff';
+  tooltip.style.padding = '6px 12px';
+  tooltip.style.borderRadius = '6px';
+  tooltip.style.fontSize = '0.95em';
+  tooltip.style.pointerEvents = 'none';
+}
+function hideTooltip() {
+  if (tooltip) tooltip.style.display = 'none';
+}
+</script>
 </body>
 </html>

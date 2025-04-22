@@ -85,14 +85,29 @@ def currency():
     except Exception as e:
         return jsonify({'result': f'Error: {str(e)}'}), 500
 
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("primora_backend")
+
 @app.route('/joke', methods=['GET'])
 def joke():
     try:
-        resp = requests.get('https://v2.jokeapi.dev/joke/Programming?type=single')
-        joke = resp.json().get('joke', 'No joke found.')
-        add_session_event({'type': 'joke'})
+        resp = requests.get('https://v2.jokeapi.dev/joke/Programming')
+        data = resp.json()
+        logger.info(f"JokeAPI response: {data}")
+        if data.get('type') == 'single':
+            joke = data.get('joke', 'No joke found.')
+        elif data.get('type') == 'twopart':
+            joke = f"{data.get('setup', '')} ... {data.get('delivery', '')}"
+        else:
+            joke = f"Unexpected joke format: {data}"
+            logger.warning(joke)
+        add_session_event({'type': 'joke', 'joke': joke})
         return jsonify({'joke': joke})
     except Exception as e:
+        logger.error(f"Joke endpoint error: {e}", exc_info=True)
         return jsonify({'joke': f'Error: {str(e)}'}), 500
 
 @app.route('/wiki', methods=['POST'])
@@ -133,7 +148,8 @@ def news():
         add_session_event({'type': 'news', 'topic': topic, 'summaries': summaries})
         return jsonify({'news': summaries})
     except Exception as e:
-        return jsonify({'news': f'Error: {str(e)}'}), 500
+        doc_link = " For help, see the Primora Docs: https://primora-docs.windsurf.build"
+        return jsonify({"error": str(e) + doc_link}), 400
 
 import os
 
@@ -164,18 +180,30 @@ def run_code():
     lexer = PrimoraLexer()
     parser = PrimoraParser()
     interpreter = PrimoraInterpreter()
+    old_stdout = sys.stdout  # Always define before try
+    mystdout = None
+    redirected = False
     try:
         tokens = lexer.tokenize(code)
         ast = parser.parse(tokens)
-        old_stdout = sys.stdout
-        sys.stdout = mystdout = io.StringIO()
+        mystdout = io.StringIO()
+        sys.stdout = mystdout
+        redirected = True
+        print("[DEBUG] sys.stdout redirected")
         interpreter.interpret(ast)
-        sys.stdout = old_stdout
         output = mystdout.getvalue()
         return jsonify({'output': output})
     except Exception as e:
-        sys.stdout = old_stdout
-        return jsonify({'output': '', 'error': traceback.format_exc()}), 400
+        error_msg = traceback.format_exc()
+        print(f"[ERROR] Exception in run_code: {error_msg}")
+        if redirected and 'old_stdout' in locals():
+            print("[DEBUG] Restoring sys.stdout in except")
+            sys.stdout = old_stdout
+        return jsonify({'output': '', 'error': error_msg}), 400
+    finally:
+        if redirected and 'old_stdout' in locals():
+            print("[DEBUG] Restoring sys.stdout in finally")
+            sys.stdout = old_stdout
 
 @app.route('/explain', methods=['POST'])
 def explain_code():
@@ -197,5 +225,13 @@ def refactor_code():
     except Exception as e:
         return jsonify({'refactored': f'Error: {str(e)}'}), 500
 
+# Global error handler for unhandled exceptions
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.error(f"Unhandled Exception: {e}", exc_info=True)
+    return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    port = int(os.environ.get('PORT', 5001))
+    logger.info(f"Starting Primora backend on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=True)

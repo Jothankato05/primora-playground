@@ -7,6 +7,7 @@ server = LanguageServer('primora-lsp', '0.1')
 async def did_open(ls, params):
     text_doc = ls.workspace.get_text_document(params.text_document.uri)
     diagnostics = []
+    suggestions = []
     
     # Basic error checking (e.g., invalid keywords)
     lines = text_doc.source.splitlines()
@@ -18,7 +19,8 @@ async def did_open(ls, params):
                     end=Position(line=i, character=len(line))
                 ),
                 message="Invalid keyword detected",
-                severity=DiagnosticSeverity.Error
+                severity=DiagnosticSeverity.Error,
+                data={'suggestions': suggestions + ['See the Primora Docs for help: https://primora-docs.windsurf.build']}
             ))
     
     ls.publish_diagnostics(text_doc.uri, diagnostics)
